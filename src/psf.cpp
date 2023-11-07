@@ -1,4 +1,4 @@
-#include "../include/PSF/psf.hpp"
+#include <PSF/psf.hpp>
 #include <fstream>
 #include <iostream>
 #include <ostream>
