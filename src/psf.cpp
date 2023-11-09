@@ -187,6 +187,8 @@ void PSFSaveFile::restore() {
     for (auto &handler : m_handlers){
         handler->restore(m_restoreData.get());
     }
+
+    ifs.close();
 }
 
 
