@@ -89,6 +89,7 @@ public:
     void writeInt(int v) override;
     void writeShort(short v) override;
     void writeFloat(float v) override;
+    void writeDouble(double d) override;
     void writeString(std::string v) override;
 
 private:

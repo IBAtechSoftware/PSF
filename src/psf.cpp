@@ -80,6 +80,16 @@ PSFSaveData::PSFSaveData(std::ofstream &ofs) : m_stream(ofs) {
 
 }
 
+
+void PSFSaveData::writeDouble(double d) {
+    PSFWritable write;
+    write.type = PSFWritableType_Double;
+    write.size = sizeof(double);
+    write.d = d;
+
+    write.writeToStream(m_stream);
+}
+
 void PSFSaveData::writeInt(int v){
     PSFWritable write;
     write.type = PSFWritableType_Int;
