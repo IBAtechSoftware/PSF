@@ -65,6 +65,7 @@ public:
     virtual void writeInt(int v) = 0;
     virtual void writeShort(short v) = 0;
     virtual void writeFloat(float v) = 0;
+    virtual void writeDouble(double d) = 0;
     virtual void writeString(std::string v) = 0;
 };
 
