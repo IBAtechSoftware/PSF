@@ -104,6 +104,14 @@ void PSFSaveData::writeString(std::string v) {
   write.writeToStream(m_ky->add_values());
 }
 
+void PSFSaveData::writeDouble(double d) {
+  PSFWritable write;
+  write.type = PSFWritableType_Double;
+  write.d = d;
+
+  write.writeToStream(m_ky->add_values());
+}
+
 PSFRestoreData::PSFRestoreData(PSFProto::PSFSaveFile *ky, int *cValue)
     : m_ky(ky), m_cValue(cValue) {}
 

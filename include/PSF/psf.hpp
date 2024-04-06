@@ -58,6 +58,7 @@ public:
     virtual void writeInt(int v) = 0;
     virtual void writeFloat(float v) = 0;
     virtual void writeString(std::string v) = 0;
+    virtual void writeDouble(double d) = 0;
 };
 
 class PSFRestoreData : public PSFReadInterface {
@@ -81,6 +82,7 @@ public:
     void writeInt(int v) override;
     void writeFloat(float v) override;
     void writeString(std::string v) override;
+    void writeDouble(double d) override;
 
 private:
     PSFProto::PSFSaveFile *m_ky;
