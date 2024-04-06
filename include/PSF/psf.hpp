@@ -1,8 +1,8 @@
 #pragma once
-#include <proto/psf.pb.h>
 #include <string>
 #include <vector>
 #include <memory>
+#include "../psf_proto/proto/psf.pb.h"
 
 /*
     PSF file layout:
