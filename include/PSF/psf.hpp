@@ -1,8 +1,5 @@
 #pragma once
-
-#include <ostream>
-#include <istream>
-#include <fstream>
+#include <proto/psf.pb.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -26,23 +23,20 @@ const std::string GPSFTitleName = "PortableSaveFile1";
 enum PSFWritableType {
     PSFWritableType_Int = 0,
     PSFWritableType_Float = 1,
-    PSFWritableType_Short = 2,
-    PSFWritableType_Double = 3,
-    PSFWritableType_String = 4
+    PSFWritableType_Double = 2,
+    PSFWritableType_String = 3
 };
 
 struct PSFWritable {
     PSFWritableType type;
-    size_t size;
 
     float f;
-    short s;
     double d;
     int i;
-    std::string ss;
+    std::string s;
 
-    void writeToStream(std::ofstream &ofs);
-    void readFromStream(std::ifstream &ifs);
+    void writeToStream(PSFProto::PSFSaveFile::PSFKeyValue *kv);
+    void readFromStream(PSFProto::PSFSaveFile::PSFKeyValue *kv);
 };
 
 
@@ -54,7 +48,6 @@ struct PSFSaveFileProperties {
 class PSFReadInterface {
 public:
     virtual int readInt() = 0;
-    virtual short readShort() = 0;
     virtual float readFloat() = 0;
     virtual double readDouble() = 0;
     virtual std::string readString() = 0;
@@ -63,36 +56,34 @@ public:
 class PSFWriteInterface {
 public:
     virtual void writeInt(int v) = 0;
-    virtual void writeShort(short v) = 0;
     virtual void writeFloat(float v) = 0;
     virtual void writeString(std::string v) = 0;
 };
 
 class PSFRestoreData : public PSFReadInterface {
 public:
-    PSFRestoreData(std::ifstream &ifs);
+    PSFRestoreData(PSFProto::PSFSaveFile *ky, int *cValue);
 
     int readInt() override;
-    short readShort() override;
     float readFloat() override;
     double readDouble() override;
     std::string readString() override;
 
 private:
-    std::ifstream &m_stream;
+    PSFProto::PSFSaveFile *m_ky;
+    int *m_cValue;
 };
 
 class PSFSaveData : public PSFWriteInterface {
 public:
-    PSFSaveData(std::ofstream &ofs);
+    PSFSaveData(PSFProto::PSFSaveFile *ky);
 
     void writeInt(int v) override;
-    void writeShort(short v) override;
     void writeFloat(float v) override;
     void writeString(std::string v) override;
 
 private:
-    std::ofstream &m_stream;
+    PSFProto::PSFSaveFile *m_ky;
 };
 
 class PSFTableHandler {

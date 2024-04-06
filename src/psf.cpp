@@ -1,199 +1,173 @@
 #include <PSF/psf.hpp>
 #include <fstream>
-#include <iostream>
-#include <ostream>
+#include <google/protobuf/stubs/common.h>
 
-void PSFWritable::readFromStream(std::ifstream &ifs){
-    ifs.read((char*) &type, sizeof(PSFWritableType));
-    ifs.read((char*) &size, sizeof(size_t));
+void PSFWritable::readFromStream(PSFProto::PSFSaveFile::PSFKeyValue *table) {
+  PSFProto::PSFSaveFile::PSFValueType valType = table->type();
 
-    switch (type){
-        case PSFWritableType_Double:
-            ifs.read((char*) &d, size);
-            break;
-        case PSFWritableType_Float:
-            ifs.read((char*) &f, size);
-            break;
-        case PSFWritableType_Int:
-            ifs.read((char*) &i, size);
-            break;
-        case PSFWritableType_Short:
-            ifs.read((char*) &s, size);
-            break;
-        case PSFWritableType_String:
-            char* readStr = (char*) malloc(size);
-            ifs.read((char*) readStr, size);
-
-            ss = std::string(readStr);
-            break;
-    }
+  switch (valType) {
+  case PSFProto::PSFSaveFile_PSFValueType_Int32: {
+    i = table->intval();
+    break;
+  }
+  case PSFProto::PSFSaveFile_PSFValueType_String: {
+    s = table->stringval();
+    break;
+  }
+  case PSFProto::PSFSaveFile_PSFValueType_Float: {
+    f = table->floatval();
+    break;
+  }
+  case PSFProto::PSFSaveFile_PSFValueType_Double:
+    d = table->doubleval();
+    break;
+  }
 }
 
-void PSFWritable::writeToStream(std::ofstream &ofs){
-    ofs.write((char*) &type, sizeof(PSFWritableType));
-    ofs.write((char*) &size, sizeof(size_t));
-    
-    switch (type){
-        case PSFWritableType_Double:
-            ofs.write((char*) &d, size);
-            break;
-        case PSFWritableType_Float:
-            ofs.write((char*) &f, size);
-            break;
-        case PSFWritableType_Int:
-            ofs.write((char*) &i, size);
-            break;
-        case PSFWritableType_Short:
-            ofs.write((char*) &s, size);
-            break;
-        case PSFWritableType_String:
-            ofs.write((char*) ss.c_str(), size);
-            break;
-    }
+void PSFWritable::writeToStream(PSFProto::PSFSaveFile::PSFKeyValue *kv) {
+  switch (type) {
+  case PSFWritableType_Int: {
+    kv->set_type(PSFProto::PSFSaveFile_PSFValueType_Int32);
+    kv->set_intval(i);
+    break;
+  }
+  case PSFWritableType_Float: {
+    kv->set_type(PSFProto::PSFSaveFile_PSFValueType_Float);
+    kv->set_floatval(f);
+    break;
+  }
+
+  case PSFWritableType_Double: {
+    kv->set_type(PSFProto::PSFSaveFile_PSFValueType_Double);
+    kv->set_doubleval(d);
+    break;
+  }
+  case PSFWritableType_String:
+    kv->set_type(PSFProto::PSFSaveFile_PSFValueType_String);
+    kv->set_stringval(s);
+    break;
+  }
 }
 
-PSFSaveFile::PSFSaveFile(std::string file) : m_filePath(file) {
-}
+PSFSaveFile::PSFSaveFile(std::string file) : m_filePath(file) {}
 
 void PSFSaveFile::save() {
-    std::ofstream ofs(m_filePath, std::ios::binary);
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    ofs.write((char*) GPSFHeader.c_str(), (GPSFHeader.size() + 1) * sizeof(char));
+  PSFProto::PSFSaveFile saveFile;
+  saveFile.set_header(GPSFHeader);
+  saveFile.set_gamename(m_saveProperties.game);
+  saveFile.set_version(m_saveProperties.version);
 
-    size_t gameNameSize = (m_saveProperties.game.size() + 1) * sizeof(char);
+  int cValue = 0;
 
-    ofs.write((char*) &gameNameSize, sizeof(size_t));
-    ofs.write((char*) m_saveProperties.game.c_str(), gameNameSize);
-    ofs.write((char*) &m_saveProperties.version, sizeof(int));
+  for (auto &handler : m_handlers) {
+    PSFSaveData *data = new PSFSaveData(&saveFile);
 
-    m_saveData.reset();
-    m_saveData = std::make_shared<PSFSaveData>(ofs);
+    handler->save(data);
 
-    for (auto &handler : m_handlers){
-        handler->save(m_saveData.get());
-    }
+    delete data;
+  }
 
-    ofs.close();
+  std::fstream output(m_filePath,
+                      std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (!saveFile.SerializeToOstream(&output)) {
+    throw std::runtime_error(
+        "Failed to save PSF save file: Protobuf serialization failed!");
+  }
 }
 
-PSFSaveData::PSFSaveData(std::ofstream &ofs) : m_stream(ofs) {
+PSFSaveData::PSFSaveData(PSFProto::PSFSaveFile *ky) : m_ky(ky) {}
 
+void PSFSaveData::writeInt(int v) {
+  PSFWritable write;
+  write.type = PSFWritableType_Int;
+  write.i = v;
+
+  write.writeToStream(m_ky->add_values());
 }
 
-void PSFSaveData::writeInt(int v){
-    PSFWritable write;
-    write.type = PSFWritableType_Int;
-    write.size = sizeof(int);
-    write.i = v;
+void PSFSaveData::writeFloat(float v) {
+  PSFWritable write;
+  write.type = PSFWritableType_Float;
+  write.f = v;
 
-    write.writeToStream(m_stream);
+  write.writeToStream(m_ky->add_values());
 }
 
-void PSFSaveData::writeFloat(float v){
-    PSFWritable write;
-    write.type = PSFWritableType_Float;
-    write.size = sizeof(float);
-    write.f = v;
+void PSFSaveData::writeString(std::string v) {
+  PSFWritable write;
+  write.type = PSFWritableType_String;
+  write.s = v;
 
-    write.writeToStream(m_stream);
+  write.writeToStream(m_ky->add_values());
 }
 
-void PSFSaveData::writeShort(short v){
-    PSFWritable write;
-    write.type = PSFWritableType_Short;
-    write.size = sizeof(short);
-    write.s = v;
-
-    write.writeToStream(m_stream);
-}
-
-void PSFSaveData::writeString(std::string v){
-    PSFWritable write;
-    write.type = PSFWritableType_String;
-    write.size = (v.size() + 1) * sizeof(char);
-    write.ss = v;
-
-    write.writeToStream(m_stream);
-}
-
-PSFRestoreData::PSFRestoreData(std::ifstream &ifs) : m_stream(ifs) {
-
-}
+PSFRestoreData::PSFRestoreData(PSFProto::PSFSaveFile *ky, int *cValue)
+    : m_ky(ky), m_cValue(cValue) {}
 
 int PSFRestoreData::readInt() {
-    PSFWritable write;
-    write.readFromStream(m_stream);
+  PSFWritable write;
 
-    return write.i;
-}
+  write.readFromStream(m_ky->mutable_values(*m_cValue));
+  *m_cValue = *m_cValue + 1;
 
-short PSFRestoreData::readShort() {
-    PSFWritable write;
-    write.readFromStream(m_stream);
-
-    return write.s;
+  return write.i;
 }
 
 float PSFRestoreData::readFloat() {
-    PSFWritable write;
-    write.readFromStream(m_stream);
+  PSFWritable write;
 
-    return write.f;
+  write.readFromStream(m_ky->mutable_values(*m_cValue));
+  *m_cValue = *m_cValue + 1;
+
+  return write.f;
 }
 
 double PSFRestoreData::readDouble() {
-    PSFWritable write;
-    write.readFromStream(m_stream);
+  PSFWritable write;
 
-    return write.d;
+  write.readFromStream(m_ky->mutable_values(*m_cValue));
+  *m_cValue = *m_cValue + 1;
+
+  return write.d;
 }
 
 std::string PSFRestoreData::readString() {
-    PSFWritable write;
-    write.readFromStream(m_stream);
+  PSFWritable write;
 
-    return write.ss;
+  write.readFromStream(m_ky->mutable_values(*m_cValue));
+  *m_cValue = *m_cValue + 1;
+
+  return write.s;
 }
 
 void PSFSaveFile::restore() {
-    std::ifstream ifs(m_filePath, std::ios::binary);
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    char* header = (char*) malloc(5 * sizeof(char));
-    char* gameName;
+  PSFProto::PSFSaveFile saveFile;
+  std::fstream input(m_filePath, std::ios::in | std::ios::binary);
 
-    ifs.read((char*) header, (GPSFHeader.size() + 1) * sizeof(char));
-    
-    if (std::string(header) != "PSF1") {
-        throw std::runtime_error("File is not a PSF v1 save file! Header != PSF1");
-    }
+  if (!saveFile.ParseFromIstream(&input)) {
+    throw std::runtime_error("Failed to load PSF save file: Protobuf parse failed!");
+  }
+  
+  int cValue = 0;
 
-    size_t gameNameSize = 0;
+  for (auto &handler : m_handlers) {
+    PSFRestoreData* restore = new PSFRestoreData(&saveFile, &cValue);
 
-    ifs.read((char*) &gameNameSize, sizeof(size_t));
+    handler->restore(restore);
 
-    gameName = (char*) malloc(gameNameSize);
-    
-    ifs.read((char*) gameName, gameNameSize);
-    ifs.read((char*) &m_saveProperties.version, sizeof(int));
-
-    m_saveProperties.game = std::string(gameName);
-
-    free(gameName);
-    free(header);
-
-    m_restoreData.reset();
-    m_restoreData = std::make_shared<PSFRestoreData>(ifs);
-
-    for (auto &handler : m_handlers){
-        handler->restore(m_restoreData.get());
-    }
+    delete restore;
+  }
 }
 
-
-PSFTableHandler::PSFTableHandler(std::string tableName){
-    m_tableName = tableName;
+PSFTableHandler::PSFTableHandler(std::string tableName) {
+  m_tableName = tableName;
 }
 
-void PSFSaveFile::registerTableHandler(PSFTableHandler *handler){
-    m_handlers.push_back(handler);
+void PSFSaveFile::registerTableHandler(PSFTableHandler *handler) {
+  m_handlers.push_back(handler);
 }

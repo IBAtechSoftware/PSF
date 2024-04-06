@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+package PSFProto;
+
+message PSFSaveFile {
+    required string header = 1;
+    required int32 version = 2;
+    required string gameName = 3;
+
+    enum PSFValueType {
+        Int32 = 0;
+        String = 1;
+        Float = 2;
+        Double = 3;
+    };
+
+    message PSFKeyValue {
+        required PSFValueType type = 1;
+        optional int32 intVal = 2;
+        optional string stringVal = 3;
+        optional float floatVal = 4;
+        optional double doubleVal = 5;
+    };
+
+    repeated PSFKeyValue values = 4;
+};

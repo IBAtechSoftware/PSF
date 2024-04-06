@@ -1,0 +1,50 @@
+[
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "",
+    "file": "CMakeFiles/psf.dir",
+    "output": "cmake_object_order_depends_target_psf"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "/usr/lib64/ccache/c++ -Dpsf_EXPORTS -I/home/interfiber/dev/PSFSave/include -I/home/interfiber/dev/PSFSave/psf_proto -fPIC -MD -MT CMakeFiles/psf.dir/src/psf.cpp.o -MF CMakeFiles/psf.dir/src/psf.cpp.o.d -o CMakeFiles/psf.dir/src/psf.cpp.o -c /home/interfiber/dev/PSFSave/src/psf.cpp",
+    "file": "/home/interfiber/dev/PSFSave/src/psf.cpp",
+    "output": "CMakeFiles/psf.dir/src/psf.cpp.o"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": ": && /usr/lib64/ccache/c++ -fPIC    -shared -Wl,-soname,libpsf.so -o libpsf.so CMakeFiles/psf.dir/src/psf.cpp.o   && :",
+    "file": "CMakeFiles/psf.dir/src/psf.cpp.o",
+    "output": "libpsf.so"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "",
+    "file": "CMakeFiles/edit_cache.util",
+    "output": "edit_cache"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "",
+    "file": "CMakeFiles/rebuild_cache.util",
+    "output": "rebuild_cache"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "",
+    "file": "libpsf.so",
+    "output": "psf"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "",
+    "file": "libpsf.so",
+    "output": "all"
+  },
+  {
+    "directory": "/home/interfiber/dev/PSFSave/build",
+    "command": "/usr/bin/cmake --regenerate-during-build -S/home/interfiber/dev/PSFSave -B/home/interfiber/dev/PSFSave/build",
+    "file": "/home/interfiber/dev/PSFSave/CMakeLists.txt",
+    "output": "build.ninja"
+  }
+]

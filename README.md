@@ -1,6 +1,9 @@
 # Portable Save File
 Cross platform save file format, and library
 
+## PSF v2
+Same API, different binary format using protocol buffers.
+
 ```c++
 #include "../include/PSF/psf.hpp"
 #include <iostream>
